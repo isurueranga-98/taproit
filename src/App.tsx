@@ -1,23 +1,17 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { ChatProvider } from './hooks/useChat';
-import { ChatPage } from './pages/ChatPage';
-import { UploadPage } from './pages/UploadPage';
+import './App.css';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ChatWindow } from './components';
+
+
+const queryClient = new QueryClient();
+
 
 function App() {
-  return (
-    <ChatProvider>
-      <Router>
-        <nav>
-          <Link to="/">Chat</Link>
-          <Link to="/upload">Upload PDF</Link>
-        </nav>
-        <Routes>
-          <Route path="/" element={<ChatPage />} />
-          <Route path="/upload" element={<UploadPage />} />
-        </Routes>
-      </Router>
-    </ChatProvider>
-  );
+    return (
+        <QueryClientProvider client={queryClient}>
+            <ChatWindow />
+        </QueryClientProvider>
+    );
 }
 
 export default App;
