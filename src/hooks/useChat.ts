@@ -1,14 +1,9 @@
-
 import { io, Socket } from 'socket.io-client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { TMessage } from '../types';
 import { UserTypes } from '../enums';
-import { useRef } from 'react';
-
-
 
 export const useChatWindow = () => {
-
   const getRandomUUID = () => {
     return crypto.randomUUID();
   };
@@ -36,8 +31,8 @@ export const useChatWindow = () => {
 
   const onNewChat = () => resetConversation(getRandomUUID());
 
-  const resetConversation = (conversationId: string) => {
-    setConversationId(conversationId);
+  const resetConversation = (newConversationId: string) => {
+    setConversationId(newConversationId);
     setMessages([]);
   };
 
@@ -49,7 +44,7 @@ export const useChatWindow = () => {
       query: inputMessage,
       conversation_id: conversationId,
     };
-    console.log(messageData)
+    console.log(messageData);
     socket.emit('chat', messageData);
 
     setMessages(prevMessages => [
@@ -62,7 +57,6 @@ export const useChatWindow = () => {
     ]);
 
     setThinking(true);
-
     setInputMessage('');
   };
 
@@ -72,19 +66,17 @@ export const useChatWindow = () => {
       return;
     }
 
-    let socket = io('http://127.0.0.1:8000');
-    setSocket(socket);
+    const socketInstance = io('http://127.0.0.1:8000');
+    setSocket(socketInstance);
 
-    socket.on("connect", () => {
-      console.log("Socket connected", socket);
-      setSocket(socket);
+    socketInstance.on("connect", () => {
+      console.log("Socket connected", socketInstance);
+      setSocket(socketInstance);
     });
 
-    if (conversationId) {
-      socket.emit('join', { conversation_id: conversationId });
-    }
+    socketInstance.emit('join', { conversation_id: conversationId });
 
-    socket.on('response', data => {
+    socketInstance.on('response', data => {
       if (data.id && data.data !== undefined) {
         setMessages(prevMessages => {
           // Check if the message with the same id already exists
@@ -100,7 +92,6 @@ export const useChatWindow = () => {
 
               return updatedMessages;
             }
-
             return prevMessages;
           } else {
             return [
@@ -113,19 +104,21 @@ export const useChatWindow = () => {
             ];
           }
         });
-
-
         setThinking(false);
       } else {
         console.log('Data received but missing "id" or "data" property:', data);
       }
     });
 
-  }, [conversationId]); // Reconnect when conversationId changes
+    // Cleanup function: disconnect the socket when the effect unmounts or conversationId changes
+    return () => {
+      socketInstance.disconnect();
+    };
+  }, [conversationId]);
 
   useEffect(() => {
     if (messagesRef.current) {
-        messagesRef.current.scrollIntoView({ behavior: 'smooth' });
+      messagesRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
 
@@ -142,13 +135,5 @@ export const useChatWindow = () => {
     setMaximized,
     messagesRef,
     thinking,
-  }
-
+  };
 };
-
-
-
-
-
-
-
